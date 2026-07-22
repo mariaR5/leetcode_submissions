@@ -11,27 +11,12 @@
  */
 class Solution {
 public:
-    bool isSame = true;
-    void traverse(TreeNode* p, TreeNode* q) {
-        if (p == NULL && q == NULL) return;
-        else if (p == NULL && q != NULL) {
-            isSame = false;
-            return;
-        }
-         else if (p != NULL && q == NULL) {
-            isSame = false;
-            return;
-        }
-
-        if (p->val != q->val) {
-            isSame = false;
-            return;
-        }
-        traverse(p->left, q->left);
-        traverse(p->right, q->right);
-    }
     bool isSameTree(TreeNode* p, TreeNode* q) {
-        traverse(p, q);
-        return isSame;
+        if (p == NULL && q == NULL) return true;
+        if (p == NULL || q == NULL) return false;
+
+        return p->val == q->val 
+            && isSameTree(p->left, q->left)
+            && isSameTree(p->right, q->right);
     }
 };
