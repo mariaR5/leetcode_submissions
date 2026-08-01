@@ -1,39 +1,11 @@
 class Twitter {
 public:
-    int tweetId;
     int timeStamp;
     unordered_map<int, unordered_set<int>> follows;
     unordered_map<int, vector<pair<int, int>>> tweets;
     
     Twitter() {
-        tweetId = 0;
         timeStamp = 0;
-    }
-
-    priority_queue<
-        pair<int, int>,
-        vector<pair<int, int>>,
-        greater<pair<int, int>>
-        >  buildHeap(int userId) {
-        priority_queue<
-        pair<int, int>,
-        vector<pair<int, int>>,
-        greater<pair<int, int>>
-        > recents;
-
-        for (auto tweet: tweets[userId]) {
-            recents.push({tweet.first, tweet.second});
-            while (recents.size() > 10) recents.pop();
-        }
-
-        for (int following: follows[userId]) {
-            for (auto tweet: tweets[following]) {
-                recents.push({tweet.first, tweet.second});
-                while (recents.size() > 10) recents.pop();
-            }
-        }
-
-        return recents;
     }
     
     void postTweet(int userId, int tweetId) {
@@ -42,21 +14,56 @@ public:
     }
     
     vector<int> getNewsFeed(int userId) {
-        priority_queue<
-        pair<int, int>,
-        vector<pair<int, int>>,
-        greater<pair<int, int>>
-        > recents = buildHeap(userId);
+        priority_queue<vector<int>> pq;
 
-        vector<int> recentTweets;
-
-        while(!recents.empty()) {
-            recentTweets.push_back(recents.top().second);
-            recents.pop();
+        if (!tweets[userId].empty()) {
+            int index = tweets[userId].size() - 1;
+            pq.push({
+                tweets[userId][index].first, // timestamp
+                tweets[userId][index].second, // tweetId
+                userId,
+                index, 
+            });
         }
 
-        reverse(recentTweets.begin(), recentTweets.end());
-        return recentTweets;
+        if (!follows[userId].empty()) {
+            for (auto followeeId : follows[userId]) {
+                if (!tweets[followeeId].empty()) {
+                    int index = tweets[followeeId].size()-1;
+                    pq.push({
+                        tweets[followeeId][index].first, // timestamp
+                        tweets[followeeId][index].second, // tweetId
+                        followeeId,
+                        index, 
+                    });
+                }
+            }
+        }
+
+        vector<int> recents;
+
+        while (!pq.empty() && recents.size() < 10) {
+            auto cur = pq.top();
+            pq.pop();
+
+            int tweetId = cur[1];
+            int user = cur[2];
+            int index = cur[3];
+
+            recents.push_back(tweetId);
+
+            if (index > 0) {
+                index--;
+                pq.push({
+                    tweets[user][index].first, // timestamp
+                    tweets[user][index].second, // tweetId
+                    user,
+                    index, 
+                });
+            }
+        }
+
+        return recents;
     }
     
     void follow(int followerId, int followeeId) {
